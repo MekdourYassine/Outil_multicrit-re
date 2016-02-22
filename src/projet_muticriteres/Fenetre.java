@@ -5,12 +5,75 @@
  */
 package projet_muticriteres;
 
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import jxl.Workbook;
+import jxl.read.biff.BiffException;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRichTextString;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.DataFormatter;
+
+
 /**
  *
  * @author yassine
  */
 public class Fenetre extends javax.swing.JFrame {
 
+    private ArrayList<Action> tabActions = new ArrayList<Action>();
+    private Vector<String> tabCriteres = new Vector<String>();
+    private Vector<JTextField>text= new Vector<JTextField>();
+    private Vector<JLabel>label = new Vector<JLabel>();
+    private Vector<JPanel>panel = new Vector<JPanel>();
+    private JPanel panelBout= new JPanel();
+    private JButton boutonOk = new JButton("OK",new ImageIcon("tick.png"));
+    private JButton boutonCan= new JButton("Annuler", new ImageIcon("cross-script.png"));
+    private JDialog boiteAgrega;
+    
+    
+    private Action action;
+    private String critere;  
+    private JTable tab; 
+    private Object jTextField1;
+    private String [] titreColonne;
+    private Object [][] donnees ;
+    private int [] parametres;
+    private DefaultTableModel model; 
+       
+       
+    
     /**
      * Creates new form Fenetre
      */
@@ -32,8 +95,10 @@ public class Fenetre extends javax.swing.JFrame {
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jPanel2 = new javax.swing.JPanel();
         jButton5 = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -50,10 +115,16 @@ public class Fenetre extends javax.swing.JFrame {
         jMenuItem8 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("DECISION MULTICRITERES");
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Méthodes", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.TOP));
 
         jButton1.setText("Agrégation");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jButton2.setText("OPT. Lexicographique");
 
@@ -71,21 +142,13 @@ public class Fenetre extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(37, 37, 37)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton2)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(28, 28, 28)
-                                .addComponent(jButton1))))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(71, 71, 71)
-                        .addComponent(jButton3))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(60, 60, 60)
-                        .addComponent(jButton4)))
-                .addContainerGap(75, Short.MAX_VALUE))
+                .addGap(37, 37, 37)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -98,27 +161,68 @@ public class Fenetre extends javax.swing.JFrame {
                 .addComponent(jButton3)
                 .addGap(52, 52, 52)
                 .addComponent(jButton4)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(183, Short.MAX_VALUE))
         );
 
+        jButton5.setText("Quitter");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Affichage", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.TOP));
+
+        jTable1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4", "Title 5", "Title 6", "Title 7", "Title 8", "Title 9", "Title 10"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jTable1.setCursor(new java.awt.Cursor(java.awt.Cursor.CROSSHAIR_CURSOR));
+        jTable1.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
+        jScrollPane1.setViewportView(jTable1);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 504, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 958, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        jButton5.setText("Quitter");
 
         jMenu1.setText("Fichier");
 
         jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem1.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\mail-open.png")); // NOI18N
         jMenuItem1.setText("Ouvrir");
         jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -128,6 +232,7 @@ public class Fenetre extends javax.swing.JFrame {
         jMenu1.add(jMenuItem1);
 
         jMenuItem2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_E, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem2.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\disk-black.png")); // NOI18N
         jMenuItem2.setText("Enregistrer");
         jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -138,6 +243,7 @@ public class Fenetre extends javax.swing.JFrame {
         jMenu1.add(jSeparator1);
 
         jMenuItem3.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem3.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\computer_delete.png")); // NOI18N
         jMenuItem3.setText("Quitter");
         jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -151,6 +257,7 @@ public class Fenetre extends javax.swing.JFrame {
         jMenu2.setText("Méthodes");
 
         jMenuItem4.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem4.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\application.png")); // NOI18N
         jMenuItem4.setText("Agrégation");
         jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -160,10 +267,12 @@ public class Fenetre extends javax.swing.JFrame {
         jMenu2.add(jMenuItem4);
 
         jMenuItem5.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem5.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\application_add.png")); // NOI18N
         jMenuItem5.setText("OPT. Lexicographique");
         jMenu2.add(jMenuItem5);
 
         jMenuItem6.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_D, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem6.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\application_cascade.png")); // NOI18N
         jMenuItem6.setText("Distances");
         jMenuItem6.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -173,6 +282,7 @@ public class Fenetre extends javax.swing.JFrame {
         jMenu2.add(jMenuItem6);
 
         jMenuItem9.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem9.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\application-block.png")); // NOI18N
         jMenuItem9.setText("Surclassement");
         jMenuItem9.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -186,6 +296,7 @@ public class Fenetre extends javax.swing.JFrame {
         jMenu3.setText("Autres");
 
         jMenuItem7.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_H, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem7.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\book-question.png")); // NOI18N
         jMenuItem7.setText("Aide");
         jMenuItem7.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -195,6 +306,7 @@ public class Fenetre extends javax.swing.JFrame {
         jMenu3.add(jMenuItem7);
 
         jMenuItem8.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_P, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem8.setIcon(new javax.swing.ImageIcon("C:\\Users\\yassine\\Documents\\NetBeansProjects\\Projet_MutiCriteres\\icons\\balloon-smiley.png")); // NOI18N
         jMenuItem8.setText("A propos");
         jMenu3.add(jMenuItem8);
 
@@ -208,28 +320,145 @@ public class Fenetre extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(82, 82, 82)
-                        .addComponent(jButton5)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(35, 35, 35)))
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(66, 66, 66)
+                .addGap(18, 18, 18)
                 .addComponent(jButton5)
-                .addGap(0, 76, Short.MAX_VALUE))
+                .addGap(0, 19, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
+	
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        // TODO add your handling code here:
+        
+         final JFileChooser fc = new JFileChooser(new File ("."));
+        FileNameExtensionFilter filtre = new FileNameExtensionFilter("Fichier Excel","xlsx","xls");
+        fc.setFileFilter(filtre);
+        File fichier;
+        if (fc.showOpenDialog(null)== JFileChooser.APPROVE_OPTION) {
+	    fichier = fc.getSelectedFile();
+            
+        try {
+               
+                POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(fichier.getCanonicalPath()));
+                
+               
+                    HSSFWorkbook wb = new HSSFWorkbook(fs);
+                    HSSFSheet sheet = wb.getSheetAt(0);
+                    HSSFRow row = null;
+                    HSSFCell cell = null;
+                    double totalLigne = 0.0;
+                    double totalGeneral = 0.0;
+                    int numLigne = 1;
+                    int ligne=0;
+                    int colonne=0; 
+                    int k;
+                    row = sheet.getRow(0);
+                    while (sheet.getRow(ligne)!= null ){
+                        row = sheet.getRow(ligne);
+                        colonne=0;
+                        k=0;
+                    if (ligne==0) {
+                        colonne =1;
+                        while (row.getCell(colonne)!=null)
+                        {
+                            cell= row.getCell(colonne);             
+                            tabCriteres.add(cell.getStringCellValue());
+                            colonne++;
+                           
+                        }
+                       
+                    } else {
+                    while (row.getCell(colonne)!=null)
+                    {   
+                       cell= row.getCell(colonne);             
+                       if (colonne==0){
+                          action= new Action(cell.getStringCellValue(),tabCriteres.size()); 
+                       } else {
+                           action.ajouterNote((int)cell.getNumericCellValue(), colonne-1); 
+                       }
+                       colonne++;
+                    }
+                    tabActions.add(action);
+                    }
+                    ligne++;
+                }
+                
+                
+                fs.close();
+              } catch (FileNotFoundException e) {
+                e.printStackTrace();
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+              /*for (int i=0; i<tabCriteres.size(); i++){
+                  System.out.println("critere "+i+" : "+tabCriteres.get(i));
+              }
+              for (int i=0; i<tabActions.size(); i++){
+                  System.out.println("action "+i+" : "+tabActions.get(i).getNom());
+                  for (int j=0; j<tabCriteres.size();j++){
+                      System.out.println("note"+j+":"+tabActions.get(i).getNote(j));
+                  }
+                  
+        
+        }*/
+               
+        titreColonne= new String[tabCriteres.size()+1];  
+        donnees = new Object[tabActions.size()][tabCriteres.size()+1];
+        titreColonne[0]= "";
+        for (int i=0; i<tabCriteres.size(); i++){
+            titreColonne[i+1]= tabCriteres.get(i);
+        }
+        for (int i=0; i<tabActions.size();i++){
+            donnees[i][0] = tabActions.get(i).getNom();
+        }
+        for (int j=0; j<tabActions.size();j++){
+            for (int k=1; k<tabCriteres.size()+1; k++){ 
+                donnees[j][k]= tabActions.get(j).getNote(k-1);
+            }
+        }
+        model = new DefaultTableModel(donnees, titreColonne);
+        jTable1.setModel(model);
+       // this.getContentPane().add(new JScrollPane(tab));
+        //this.add(tab);
+        //jPanel2.add(label10);
+        
+        //jButton6.setLabel("buton");
+        //jPanel2.add(jButton6);
+        
+        jTable1.setVisible(true);
+        
+        //jPanel2.repaint();
+        
+           for (int i=0; i<tabCriteres.size()+1; i++){
+                  System.out.println("critere "+i+" : "+titreColonne[i]);
+              }
+              for (int i=0; i<tabActions.size(); i++){
+                  System.out.println("action "+i+" : "+donnees[i][0]);
+                  for (int j=1; j<tabCriteres.size()+1;j++){
+                      System.out.println("note"+j+":"+donnees[i][j]);
+                  }
+                  
+        
+            }
+        
+        }
+        
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
@@ -260,7 +489,100 @@ public class Fenetre extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton3ActionPerformed
 
-    /**
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        this.dispose();        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        
+        
+        JTextField textInt;
+        JLabel labelInt;
+        JPanel panelInt;
+        boiteAgrega = new JDialog(this,"Agrégation",false);
+        
+        TitledBorder title;
+    boiteAgrega.setSize(500,270);
+    boiteAgrega.setLocationRelativeTo(null);
+    boiteAgrega.setResizable(false);
+    //this.setDefaultCloseOperation(JDialog.);
+    JPanel panelPrincipal = new JPanel();
+    
+    panelPrincipal.setLayout(new GridLayout(tabCriteres.size()+1,1));
+    
+    title = BorderFactory.createTitledBorder("Veuillez saisir les poids des critères :");
+    title.setTitleJustification(TitledBorder.CENTER);
+    title.setTitlePosition(TitledBorder.TOP);
+    
+    panelPrincipal.setBorder(title);
+    
+    
+    for (int i=0; i<tabCriteres.size();i++){
+        panelInt= new JPanel();
+        labelInt= new JLabel(tabCriteres.get(i)+" : ");
+        textInt= new JTextField("1");
+        textInt.setPreferredSize(new Dimension(100, 25));
+        panel.add(panelInt);
+        label.add(labelInt);
+        text.add(textInt);
+        panel.get(i).add(label.get(i));
+        panel.get(i).add(text.get(i));
+        
+        panelPrincipal.add(panel.get(i));
+    }
+    
+    panelBout.add(boutonOk);
+    panelBout.add(boutonCan);
+    panelPrincipal.add(panelBout);
+    
+    boiteAgrega.getContentPane().add(panelPrincipal);
+    boiteAgrega.setVisible(true);
+    //this.getContentPane().add(panel1);
+    
+    parametres= new int[tabCriteres.size()];
+    boutonCan.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            boiteAgrega.setVisible(false); 
+        }
+    });
+    boutonOk.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            String txt;
+            
+            for (int j=0; j<tabCriteres.size();j++){
+                txt= text.get(j).getText();
+                parametres[j]= Integer.parseInt(txt); 
+            }
+            Agregation agregation = new Agregation(tabActions,parametres,tabCriteres.size());
+            Collections.sort(tabActions,new Comparator<Action>(){
+           public int compare (Action action1, Action action2) {
+               return Double.compare(action1.getScore(),action2.getScore());
+           }
+            });
+            
+         for (int i=0; i<tabActions.size();i++){
+            donnees[i][0] = tabActions.get(i).getNom();
+            }
+        for (int j=0; j<tabActions.size();j++){
+            for (int k=1; k<tabCriteres.size()+1; k++){ 
+                donnees[j][k]= tabActions.get(j).getNote(k-1);
+            }
+        }
+        model = new DefaultTableModel(donnees, titreColonne);
+        jTable1.setModel(model);
+        jTable1.setVisible(true);
+        } 
+    });
+
+    
+        //  Agregation agregation= new Agregation(tabActions,);  
+        
+    }//GEN-LAST:event_jButton1ActionPerformed
+       /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
@@ -316,6 +638,8 @@ public class Fenetre extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }
